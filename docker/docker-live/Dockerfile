@@ -22,11 +22,16 @@ RUN apt-get update && \
 
 WORKDIR /root/code
 
+# Install detectron2
 RUN git clone https://github.com/facebookresearch/detectron2.git
 RUN pip install -e detectron2
 
+# Install adelaiDet
 RUN git clone https://github.com/aim-uofa/AdelaiDet.git adet
 WORKDIR /root/code/adet
 RUN pip install -e .
+
+# Install nuscenes-devkit
+RUN pip install nuscenes-devkit
 
 CMD ["bash"]
