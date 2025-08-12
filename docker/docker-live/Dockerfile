@@ -27,11 +27,11 @@ RUN git clone https://github.com/facebookresearch/detectron2.git
 RUN pip install -e detectron2
 
 # Install adelaiDet
-RUN git clone https://github.com/aim-uofa/AdelaiDet.git adet
+RUN git clone https://github.com/emersontopcin/AdelaiDet_live.git adet
 WORKDIR /root/code/adet
 RUN pip install -e .
 
-# Install nuscenes-devkit
-RUN pip install nuscenes-devkit
+# Install python dependencies
+RUN pip install nuscenes-devkit opencv-python
 
 CMD ["bash"]
