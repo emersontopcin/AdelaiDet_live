@@ -7,12 +7,14 @@ import time
 import cv2
 import tqdm
 
+# Import detectron2
 from detectron2.data.detection_utils import read_image
 from detectron2.utils.logger import setup_logger
-
-#from predictor import VisualizationDemo
 from predictor import DefaultPredictor
 from adet.config import get_cfg
+
+# Import NuScenes
+from nuscenes.nuscenes import NuScenes
 
 # constants
 WINDOW_NAME = "COCO detections"
@@ -45,7 +47,9 @@ def get_parser():
     parser.add_argument("--video-input", help="Path to video file.")
     parser.add_argument("--input", nargs="+", help="A list of space separated input images")
     parser.add_argument(
-        "--output",
+        "--output-txt",
+        type=str,
+        default="/root/code/nuscenes/fcos/",
         help="A file or directory to save output visualizations. "
         "If not given, will show output in an OpenCV window.",
     )
@@ -62,32 +66,63 @@ def get_parser():
         default=[],
         nargs=argparse.REMAINDER,
     )
+    parser.add_argument(
+        "--data-root-nuscenes",
+        type=str,
+        default="/root/code/nuscenes/",
+        help="Root directory of the NuScenes dataset.",
+    )
+    parser.add_argument(
+        "--nuscenes-version",
+        type=str,
+        default="v1.0-mini",
+        help="Version of the NuScenes dataset.",
+    )
     return parser
 
-def main():
-    mp.set_start_method("spawn", force=True)
 
+def main():
+    # Setup arguments
     args = get_parser().parse_args()
-    
+
+    # Garante que o diretório de saída existe
+    os.makedirs(args.output_txt, exist_ok=True)
+
     # create the config
     cfg = setup_cfg(args)
 
     # Instantiate the predictor
     demo = DefaultPredictor(cfg)
 
-    for path in tqdm.tqdm(args.input, disable=not args.output):
-        
-        img = read_image(path, format="BGR")
+    # Open the NuScenes dataset
+    nusc = NuScenes(version=args.nuscenes_version, dataroot=args.data_root_nuscenes, verbose=True)
+
+    # Get all keyframe front camera sample_data tokens
+    sample_data_camera_tokens = [s['token'] for s in nusc.sample_data if (s['channel'] == 'CAM_FRONT') and
+                                 (s['is_key_frame'])]
+
+    for token in tqdm.tqdm(sample_data_camera_tokens):
+
+        img_path = nusc.get_sample_data_path(token)
+        print(f"Processing image: {img_path}")
+        img = read_image(img_path, format="BGR")
         predictions = demo(img)
 
         # save the predictions in a text file
         if len(predictions["instances"]) > 0:
             pred_classes = predictions["instances"].pred_classes.cpu().numpy()
             pred_boxes = predictions["instances"].pred_boxes.tensor.cpu().numpy()
-            txt_filename = os.path.splitext(path)[0] + ".txt"
+            
+            # Usa o nome base da imagem para o txt
+            base_name = os.path.splitext(os.path.basename(img_path))[0]
+            txt_filename = os.path.join(args.output_txt, base_name + ".txt")
             with open(txt_filename, "w") as f:
                 for cls, box in zip(pred_classes, pred_boxes):
-                    f.write("{}, {:.3f}, {:.3f}, {:.3f}, {:.3f}\n".format(cls, box[0], box[1], box[2], box[3]))
+                    # Salva categoria e coordenadas no formato solicitado
+                    line = f"{int(cls)}, {box[0]:.3f}, {box[1]:.3f}, {box[2]:.3f}, {box[3]:.3f}\n"
+                    f.write(line)
+        
+        break
     
 if __name__ == "__main__":
    main()
