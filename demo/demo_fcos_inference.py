@@ -49,7 +49,7 @@ def get_parser():
     parser.add_argument(
         "--output-txt",
         type=str,
-        default="/root/code/nuscenes/fcos/",
+        default="/root/code/nuscenes/fcos/CAM_FRONT/",
         help="A file or directory to save output visualizations. "
         "If not given, will show output in an OpenCV window.",
     )
@@ -104,7 +104,7 @@ def main():
     for token in tqdm.tqdm(sample_data_camera_tokens):
 
         img_path = nusc.get_sample_data_path(token)
-        print(f"Processing image: {img_path}")
+        #print(f"Processing image: {img_path}")
         img = read_image(img_path, format="BGR")
         predictions = demo(img)
 
@@ -116,13 +116,13 @@ def main():
             # Usa o nome base da imagem para o txt
             base_name = os.path.splitext(os.path.basename(img_path))[0]
             txt_filename = os.path.join(args.output_txt, base_name + ".txt")
+            #print(f"Saving predictions to: {txt_filename}")
             with open(txt_filename, "w") as f:
                 for cls, box in zip(pred_classes, pred_boxes):
                     # Salva categoria e coordenadas no formato solicitado
                     line = f"{int(cls)}, {box[0]:.3f}, {box[1]:.3f}, {box[2]:.3f}, {box[3]:.3f}\n"
                     f.write(line)
         
-        break
     
 if __name__ == "__main__":
    main()
