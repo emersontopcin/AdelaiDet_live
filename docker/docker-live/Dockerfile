@@ -32,6 +32,6 @@ WORKDIR /root/code/adet
 RUN pip install -e .
 
 # Install python dependencies
-RUN pip install nuscenes-devkit opencv-python
+RUN pip install nuscenes-devkit opencv-python "numpy<2.0" 
 
 CMD ["bash"]
