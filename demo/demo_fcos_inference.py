@@ -122,7 +122,7 @@ def main():
                     line = f"{int(cls)}, {box[0]:.3f}, {box[1]:.3f}, {box[2]:.3f}, {box[3]:.3f}\n"
                     f.write(line)
         
-        break
+        #break
     
 if __name__ == "__main__":
    main()
